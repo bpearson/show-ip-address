@@ -1,0 +1,13 @@
+{
+  "name": "Show IP Address",
+  "description": "Show the current public IP address in the panel",
+  "settings-schema": "org.gnome.shell.extensions.show-ip-address",
+  "shell-version": [
+    "3.14",
+    "3.16",
+    "3.18"
+  ],
+  "url": "https://github.com/bpearson/gnome-show-ip-address",
+  "uuid": "show_ip_address@bpearson.squiz.net",
+  "version": 1
+}
