@@ -36,7 +36,7 @@ function _getIP(callback) {
 
         var ipAddr = JSON.parse(request.response_body.data);
         if (ipAddr.ip) {
-            request    = Soup.Message.new('GET', 'http://ipinfo.io/' + ipAddr.ip + '/json');
+            request    = Soup.Message.new('GET', 'https://freegeoip.net/json/' + ipAddr.ip);
 
             _httpSession.queue_message(request, function(_httpSession, message) {
                 if (message.status_code !== 200) {
@@ -54,12 +54,14 @@ function _getIP(callback) {
 
 const DEFAULT_DATA = {
     ip: 'No Connection',
-    hostname: '',
+    country_code: '',
+    country_name: '',
+    region_code: '',
     city: '',
-    region: '',
-    country: '',
-    loc: '',
-    org: '',
+    zip_code: '',
+    time_zone: '',
+    latitude: '',
+    longitude: '',
 };
 
 const IPMenu = new Lang.Class({ //menu bar item
@@ -169,11 +171,11 @@ const IPMenu = new Lang.Class({ //menu bar item
 
                 Object.keys(ipData).map(function(key) {
                     if (this['_' + key]) {
-                        this['_' + key].text = ipData[key];
+                        this['_' + key].text = String(ipData[key]);
                     }
                 });
 
-                self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/flags/' + ipData.country + '.png');
+                self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/flags/' + ipData['country_code'] + '.png');
             }
         });
     },
