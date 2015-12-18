@@ -33,6 +33,8 @@ const DEFAULT_DATA = {
     longitude: {value: '', label: 'Longitude'},
 };
 
+const SHOW_INFO = ['ip', 'country_name', 'city', 'time_zone', 'latitude', 'longitude'];
+
 const IPMenu = new Lang.Class({
     Name: 'IPMenu.IPMenu',
 
@@ -72,7 +74,7 @@ const IPMenu = new Lang.Class({
         ipInfo.actor.add(parentContainer);
         this.menu.addMenuItem(ipInfo);
 
-        Object.keys(DEFAULT_DATA).map(function(key) {
+        SHOW_INFO.map(function(key) {
             let ipInfoRow = new St.BoxLayout();
             ipInfoBox.add_actor(ipInfoRow);
             ipInfoRow.add_actor(new St.Label({style_class: 'ip-info-key', text: DEFAULT_DATA[key]['label'] + ': '}));
@@ -138,8 +140,8 @@ const IPMenu = new Lang.Class({
                 self.ipAddr = ipData.ip;
                 self._label.text = self._compactMode ? '' : ipData.ip;
 
-                Object.keys(ipData).map(function(key) {
-                    if (this['_' + key]) {
+                SHOW_INFO.map(function(key) {
+                    if (ipData[key] &&))) this['_' + key]) {
                         this['_' + key].text = String(ipData[key]);
                     }
                 });
