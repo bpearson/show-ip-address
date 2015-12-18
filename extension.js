@@ -51,7 +51,7 @@ const IPMenu = new Lang.Class({
         let hbox = new St.BoxLayout({style_class: 'panel-status-menu-box'});
 
         this._icon = new St.Icon({
-            gicon: Gio.icon_new_for_string(Me.path + '/icons/unknown.png'),
+            gicon: Gio.icon_new_for_string(Me.path + '/icons/unknown.svg'),
             icon_size: ICON_SIZE
         });
 
@@ -68,6 +68,15 @@ const IPMenu = new Lang.Class({
 
         let ipInfo = new PopupMenu.PopupBaseMenuItem({reactive: false});
         let parentContainer = new St.BoxLayout();
+
+        // Display the flag on the popup.
+        this._flagContainer = new St.BoxLayout();
+        parentContainer.add_actor(this._flagContainer);
+        this._fileTile = new St.Icon({
+          gicon: Gio.icon_new_for_string(Me.path + '/icons/unknown.svg'),
+          icon_size: 160
+        });
+        this._flagContainer.add_actor(this._fileTile);
 
         let ipInfoBox = new St.BoxLayout({style_class: 'ip-info-box', vertical: true});
         parentContainer.add_actor(ipInfoBox);
@@ -141,10 +150,16 @@ const IPMenu = new Lang.Class({
                 self._label.text = self._compactMode ? '' : ipData.ip;
 
                 SHOW_INFO.map(function(key) {
-                    if (ipData[key] &&))) this['_' + key]) {
+                    if (ipData[key] && this['_' + key]) {
                         this['_' + key].text = String(ipData[key]);
                     }
                 });
+
+                let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+                self._flagContainer.destroy_all_children();
+                self._flagContainer.add_child(
+                    self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg'), -1, 160, scaleFactothisthisthisr)
+                );
 
                 self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg');
             }
