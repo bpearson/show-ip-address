@@ -21,52 +21,23 @@ const SETTINGS_COMPACT_MODE = 'compact-mode';
 const SETTINGS_REFRESH_RATE = 'refresh-rate';
 const SETTINGS_POSITION = 'position-in-panel';
 
-function _getIP(callback) {
-
-    let _httpSession = new Soup.SessionAsync();
-    Soup.Session.prototype.add_feature.call(_httpSession,new Soup.ProxyResolverDefault());
-
-    var request = Soup.Message.new('GET', 'https://api.ipify.org/?format=json');
-
-    _httpSession.queue_message(request, function(_httpSession, message) {
-        if (message.status_code !== 200) {
-            callback(message.status_code, null);
-            return;
-        }
-
-        var ipAddr = JSON.parse(request.response_body.data);
-        if (ipAddr.ip) {
-            request    = Soup.Message.new('GET', 'https://freegeoip.net/json/' + ipAddr.ip);
-
-            _httpSession.queue_message(request, function(_httpSession, message) {
-                if (message.status_code !== 200) {
-                    callback(message.status_code, null);
-                    return;
-                }
-
-                var ipDetails = JSON.parse(request.response_body.data);
-                callback(null, ipDetails);
-            });
-        }
-    });
-
-}
-
 const DEFAULT_DATA = {
-    ip: 'No Connection',
-    country_code: '',
-    country_name: '',
-    region_code: '',
-    city: '',
-    zip_code: '',
-    time_zone: '',
-    latitude: '',
-    longitude: '',
+    ip: {value: 'No Connection', label: 'IP'},
+    country_code: {value: '', label: 'Country Code'},
+    country_name: {value: '', label: 'Country'},
+    region_code: {value: '', label: 'Region'},
+    city: {value:'', label: 'City'},
+    zip_code: {value: '', label: 'Postcode'},
+    time_zone: {value: '', label: 'Timezone'},
+    latitude: {value: '', label: 'Latitude'},
+    longitude: {value: '', label: 'Longitude'},
 };
 
-const IPMenu = new Lang.Class({ //menu bar item
+const IPMenu = new Lang.Class({
     Name: 'IPMenu.IPMenu',
+
     Extends: PanelMenu.Button,
+
     _init: function() {
         this.parent(0.0, 'IP Details');
         this._textureCache = St.TextureCache.get_default();
@@ -82,7 +53,7 @@ const IPMenu = new Lang.Class({ //menu bar item
             icon_size: ICON_SIZE
         });
 
-        this._ipAddr = DEFAULT_DATA.ip;
+        this._ipAddr = DEFAULT_DATA.ip.value;
 
         this._label = new St.Label({
             text: this._compactMode ? '' : this._ipAddr
@@ -93,7 +64,6 @@ const IPMenu = new Lang.Class({ //menu bar item
 
         this._actor = this.actor.add_actor(hbox);
 
-        //main containers
         let ipInfo = new PopupMenu.PopupBaseMenuItem({reactive: false});
         let parentContainer = new St.BoxLayout();
 
@@ -105,15 +75,15 @@ const IPMenu = new Lang.Class({ //menu bar item
         Object.keys(DEFAULT_DATA).map(function(key) {
             let ipInfoRow = new St.BoxLayout();
             ipInfoBox.add_actor(ipInfoRow);
-            ipInfoRow.add_actor(new St.Label({style_class: 'ip-info-key', text: key + ': '}));
-            this['_' + key] = new St.Label({style_class: 'ip-info-value', text: DEFAULT_DATA[key]});
+            ipInfoRow.add_actor(new St.Label({style_class: 'ip-info-key', text: DEFAULT_DATA[key]['label'] + ': '}));
+            this['_' + key] = new St.Label({style_class: 'ip-info-value', text: DEFAULT_DATA[key]['value']});
             ipInfoRow.add_actor(this['_' + key]);
         });
 
         this._settings.connect('changed', Lang.bind(this, function() {
             this.setPrefs();
             this.stop();
-            this.start(this._refreshRate); //restarts incase refresh rate was updated
+            this.start(this._refreshRate);
             this.resetPanelPos();
             this.update();
         }));
@@ -181,15 +151,73 @@ const IPMenu = new Lang.Class({ //menu bar item
 
 });
 
-let _indicator;
+let indicator;
 
+
+/**
+ * Go get the IP data.
+ *
+ * @param callback callback The function to run when the data is obtained.
+ *
+ * @return void
+ */
+function _getIP(callback) {
+
+    let _httpSession = new Soup.SessionAsync();
+    Soup.Session.prototype.add_feature.call(_httpSession,new Soup.ProxyResolverDefault());
+
+    var request = Soup.Message.new('GET', 'https://api.ipify.org/?format=json');
+
+    _httpSession.queue_message(request, function(_httpSession, message) {
+        if (message.status_code !== 200) {
+            callback(message.status_code, null);
+            return;
+        }
+
+        var ipAddr = JSON.parse(request.response_body.data);
+        if (ipAddr.ip) {
+            request    = Soup.Message.new('GET', 'https://freegeoip.net/json/' + ipAddr.ip);
+
+            _httpSession.queue_message(request, function(_httpSession, message) {
+                if (message.status_code !== 200) {
+                    callback(message.status_code, null);
+                    return;
+                }
+
+                var ipDetails = JSON.parse(request.response_body.data);
+                callback(null, ipDetails);
+            });
+        }
+    });
+
+}
+
+
+/**
+ * Initialise.
+ *
+ * @return void
+ */
 function init() {
+
 }
 
+
+/**
+ * Enable this extension.
+ *
+ * @return void
+ */
 function enable() {
-    _indicator = new IPMenu();
+    indicator = new IPMenu();
 }
 
+
+/**
+ * Disable this extension.
+ *
+ * @return void
+ */
 function disable() {
-    _indicator.destroy();
+    indicator.destroy();
 }
