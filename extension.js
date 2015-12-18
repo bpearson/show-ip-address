@@ -78,7 +78,7 @@ const IPMenu = new Lang.Class({ //menu bar item
         let hbox = new St.BoxLayout({style_class: 'panel-status-menu-box'});
 
         this._icon = new St.Icon({
-            gicon: Gio.icon_new_for_string(Me.path + '/icons/flags/_unknown.png'),
+            gicon: Gio.icon_new_for_string(Me.path + '/icons/unknown.png'),
             icon_size: ICON_SIZE
         });
 
@@ -97,7 +97,6 @@ const IPMenu = new Lang.Class({ //menu bar item
         let ipInfo = new PopupMenu.PopupBaseMenuItem({reactive: false});
         let parentContainer = new St.BoxLayout();
 
-        //ipinfo
         let ipInfoBox = new St.BoxLayout({style_class: 'ip-info-box', vertical: true});
         parentContainer.add_actor(ipInfoBox);
         ipInfo.actor.add(parentContainer);
@@ -175,7 +174,7 @@ const IPMenu = new Lang.Class({ //menu bar item
                     }
                 });
 
-                self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/flags/' + ipData['country_code'] + '.png');
+                self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg');
             }
         });
     },
