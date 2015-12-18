@@ -15,7 +15,8 @@ const Me = ExtensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 const Soup = imports.gi.Soup;
 
-const ICON_SIZE = 16;
+const ICON_SIZE = 20;
+const FLAG_SIZE = 50;
 
 const SETTINGS_COMPACT_MODE = 'compact-mode';
 const SETTINGS_REFRESH_RATE = 'refresh-rate';
@@ -74,7 +75,7 @@ const IPMenu = new Lang.Class({
         parentContainer.add_actor(this._flagContainer);
         this._fileTile = new St.Icon({
           gicon: Gio.icon_new_for_string(Me.path + '/icons/unknown.svg'),
-          icon_size: 160
+          icon_size: FLAG_SIZE
         });
         this._flagContainer.add_actor(this._fileTile);
 
@@ -158,7 +159,7 @@ const IPMenu = new Lang.Class({
                 let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
                 self._flagContainer.destroy_all_children();
                 self._flagContainer.add_child(
-                    self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg'), -1, 160, scaleFactor)
+                    self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg'), -1, FLAG_SIZE, scaleFactor)
                 );
 
                 self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg');
