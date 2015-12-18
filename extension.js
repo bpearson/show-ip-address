@@ -158,7 +158,7 @@ const IPMenu = new Lang.Class({
                 let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
                 self._flagContainer.destroy_all_children();
                 self._flagContainer.add_child(
-                    self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg'), -1, 160, scaleFactothisthisthisr)
+                    self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg'), -1, 160, scaleFactor)
                 );
 
                 self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg');
