@@ -16,7 +16,7 @@ const Convenience = Me.imports.convenience;
 const Soup = imports.gi.Soup;
 
 const ICON_SIZE = 20;
-const FLAG_SIZE = 50;
+const FLAG_SIZE = 100;
 
 const SETTINGS_COMPACT_MODE = 'compact-mode';
 const SETTINGS_REFRESH_RATE = 'refresh-rate';
