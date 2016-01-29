@@ -146,8 +146,8 @@ const IPMenu = new Lang.Class({
         let self = this;
 
         _getIP(function(err, ipData) {
-            if (ipData) {
-                self.ipAddr = ipData.ip;
+            if (ipData !== null) {
+                self._ipAddr     = ipData.ip;
                 self._label.text = self._compactMode ? '' : ipData.ip;
 
                 SHOW_INFO.map(function(key) {
@@ -156,13 +156,28 @@ const IPMenu = new Lang.Class({
                     }
                 });
 
-                let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+                let scaleFactor  = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+                self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg');
                 self._flagContainer.destroy_all_children();
                 self._flagContainer.add_child(
                     self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg'), -1, FLAG_SIZE, scaleFactor)
                 );
+            } else {
+                self._ipAddr     = DEFAULT_DATA.ip.value;
+                self._label.text = self._compactMode ? '' : DEFAULT_DATA.ip.value;
 
-                self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg');
+                SHOW_INFO.map(function(key) {
+                    if (this['_' + key]) {
+                        this['_' + key].text = String(DEFAULT_DATA[key]['value']);
+                    }
+                });
+
+                let scaleFactor  = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+                self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/unknown.svg');
+                self._flagContainer.destroy_all_children();
+                self._flagContainer.add_child(
+                    self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/unknown.svg'), -1, FLAG_SIZE, scaleFactor)
+                );
             }
         });
     },
