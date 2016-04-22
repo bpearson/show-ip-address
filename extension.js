@@ -209,7 +209,7 @@ function _getIP(callback) {
 
         var ipAddr = JSON.parse(request.response_body.data);
         if (ipAddr.ip) {
-            request    = Soup.Message.new('GET', 'https://freegeoip.net/json/' + ipAddr.ip);
+            request = Soup.Message.new('GET', 'https://geoip.nekudo.com/api/' + ipAddr.ip + '/en/json');
 
             _httpSession.queue_message(request, function(_httpSession, message) {
                 if (message.status_code !== 200) {
@@ -218,6 +218,25 @@ function _getIP(callback) {
                 }
 
                 var ipDetails = JSON.parse(request.response_body.data);
+                if (ipDetails['country']['name']) {
+                    ipDetails['country_code'] = ipDetails['country']['code'];
+                    ipDetails['country_name'] = ipDetails['country']['name'];
+                }
+
+                if (ipDetails['location']) {
+                    if (ipDetails['location']['latitude']) {
+                        ipDetails['latitude'] = ipDetails['location']['latitude'];
+                    }
+
+                    if (ipDetails['location']['longitude']) {
+                        ipDetails['longitude'] = ipDetails['location']['longitude'];
+                    }
+
+                    if (ipDetails['location']['time_zone']) {
+                        ipDetails['time_zone'] = ipDetails['location']['time_zone'];
+                    }
+                }
+
                 callback(null, ipDetails);
             });
         }
