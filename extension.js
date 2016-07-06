@@ -17,21 +17,34 @@ const Soup = imports.gi.Soup;
 
 const ICON_SIZE = 20;
 const FLAG_SIZE = 100;
+const UNKNOWN_SIZE = 40;
 
 const SETTINGS_COMPACT_MODE = 'compact-mode';
 const SETTINGS_REFRESH_RATE = 'refresh-rate';
 const SETTINGS_POSITION = 'position-in-panel';
 
 const DEFAULT_DATA = {
-    ip: {value: 'No Connection', label: 'IP'},
-    country_code: {value: '', label: 'Country Code'},
-    country_name: {value: '', label: 'Country'},
-    region_code: {value: '', label: 'Region'},
-    city: {value:'', label: 'City'},
-    zip_code: {value: '', label: 'Postcode'},
-    time_zone: {value: '', label: 'Timezone'},
-    latitude: {value: '', label: 'Latitude'},
-    longitude: {value: '', label: 'Longitude'},
+    ip:           null,
+    country_code: '',
+    country_name: '',
+    region_code:  '',
+    city:         '',
+    zip_code:     '',
+    time_zone:    '',
+    latitude:     '',
+    longitude:    '',
+};
+
+const LABEL_DATA = {
+    ip:           'IP',
+    country_code: 'Country Code',
+    country_name: 'Country',
+    region_code:  'Region',
+    city:         'City',
+    zip_code:     'Postcode',
+    time_zone:    'Timezone',
+    latitude:     'Latitude',
+    longitude:    'Longitude',
 };
 
 const SHOW_INFO = ['ip', 'country_name', 'city', 'time_zone', 'latitude', 'longitude'];
@@ -56,10 +69,10 @@ const IPMenu = new Lang.Class({
             icon_size: ICON_SIZE
         });
 
-        this._ipAddr = DEFAULT_DATA.ip.value;
+        this._ipAddr = DEFAULT_DATA.ip;
 
         this._label = new St.Label({
-            text: this._compactMode ? '' : this._ipAddr
+            text: this.getPanelText(),
         });
 
         hbox.add_child(this._icon);
@@ -71,27 +84,20 @@ const IPMenu = new Lang.Class({
         let parentContainer = new St.BoxLayout();
 
         // Display the flag on the popup.
-        this._flagContainer = new St.BoxLayout();
+        this._flagContainer = new St.BoxLayout({style_class: 'ip-info-flag'});
         parentContainer.add_actor(this._flagContainer);
-        this._fileTile = new St.Icon({
+        let scaleFactor  = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+        this._flagTile = new St.Icon({
           gicon: Gio.icon_new_for_string(Me.path + '/icons/unknown.svg'),
-          icon_size: FLAG_SIZE
+          icon_size: UNKNOWN_SIZE
         });
-        this._flagContainer.add_actor(this._fileTile);
+        this._flagContainer.add_actor(this._flagTile);
 
-        let ipInfoBox = new St.BoxLayout({style_class: 'ip-info-box', vertical: true});
-        parentContainer.add_actor(ipInfoBox);
+        this._ipInfoBox = new St.BoxLayout({style_class: 'ip-info-box', vertical: true});
+        parentContainer.add_actor(this._ipInfoBox);
         ipInfo.actor.add(parentContainer);
         this.menu.addMenuItem(ipInfo);
-
-        SHOW_INFO.map(function(key) {
-            let ipInfoRow = new St.BoxLayout();
-            ipInfoBox.add_actor(ipInfoRow);
-            ipInfoRow.add_actor(new St.Label({style_class: 'ip-info-key', text: DEFAULT_DATA[key]['label'] + ': '}));
-            this['_' + key] = new St.Label({style_class: 'ip-info-value', text: DEFAULT_DATA[key]['value']});
-            ipInfoRow.add_actor(this['_' + key]);
-        });
-
+        this.updateDetails(DEFAULT_DATA);
         this._settings.connect('changed', Lang.bind(this, function() {
             this.setPrefs();
             this.stop();
@@ -141,6 +147,10 @@ const IPMenu = new Lang.Class({
         this._menuPosition = this._settings.get_string(SETTINGS_POSITION);
     },
 
+    getPanelText: function() {
+        return this._compactMode ? '' : (this._ipAddr == null ? 'Not Connected' : this._ipAddr);
+    },
+
     update: function() {
 
         let self = this;
@@ -148,38 +158,53 @@ const IPMenu = new Lang.Class({
         _getIP(function(err, ipData) {
             if (ipData !== null) {
                 self._ipAddr     = ipData.ip;
-                self._label.text = self._compactMode ? '' : ipData.ip;
-
-                SHOW_INFO.map(function(key) {
-                    if (ipData[key] && this['_' + key]) {
-                        this['_' + key].text = String(ipData[key]);
-                    }
-                });
+                self._label.text = self.getPanelText();
+                self.updateDetails(ipData);
 
                 let scaleFactor  = St.ThemeContext.get_for_stage(global.stage).scale_factor;
                 self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg');
                 self._flagContainer.destroy_all_children();
                 self._flagContainer.add_child(
-                    self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg'), -1, FLAG_SIZE, scaleFactor)
+                    self._textureCache.loadGGG_file_async(Gio.file_new_for_path(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg'), -1, FLAG_SIZE, scaleFactor)
                 );
             } else {
-                self._ipAddr     = DEFAULT_DATA.ip.value;
-                self._label.text = self._compactMode ? '' : DEFAULT_DATA.ip.value;
-
-                SHOW_INFO.map(function(key) {
-                    if (this['_' + key]) {
-                        this['_' + key].text = String(DEFAULT_DATA[key]['value']);
-                    }
-                });
+                self._ipAddr     = DEFAULT_DATA.ip;
+                self._label.text = self.getPanelText();
+                self.updateDetails(DEFAULT_DATA);
 
                 let scaleFactor  = St.ThemeContext.get_for_stage(global.stage).scale_factor;
                 self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/unknown.svg');
                 self._flagContainer.destroy_all_children();
                 self._flagContainer.add_child(
-                    self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/unknown.svg'), -1, FLAG_SIZE, scaleFactor)
+                    self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/unknown.svg'), -1, UNKNOWN_SIZE, scaleFactor)
                 );
             }
         });
+    },
+
+    updateDetails: function(data) {
+        if (this._ipAddr !== null) {
+            SHOW_INFO.map(function(key) {
+                if (data[key] && this['_' + key]) {
+                    this['_' + key].text = String(data[key]);
+                } else {
+                    let ipInfoRow = new St.BoxLayout();
+                    this._ipInfoBox.add_actor(ipInfoRow);
+                    ipInfoRow.add_actor(new St.Label({style_class: 'ip-info-key', text: LABEL_DATA[key] + ': '}));
+                    this['_' + key] = new St.Label({style_class: 'ip-info-value', text: data[key]});
+                    ipInfoRow.add_actor(this['_' + key]);
+                }
+            });
+        } else {
+            if (this['_notConnected']) {
+                this['_notConnected'].text = 'Not Connected';
+            } else {
+                let ipNotConnected = new St.BoxLayout();
+                this._ipInfoBox.add_actor(ipNotConnected);
+                this['_notConnected'] = new St.Label({style_class: 'ip-not-connected', text: 'Not Connected'});
+                ipNotConnected.add_actor(this['_notConnected']);
+            }
+        }
     },
 
 });

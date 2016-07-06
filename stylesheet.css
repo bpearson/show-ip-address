@@ -1,17 +1,21 @@
-
 .panel-status-menu-box {
-  padding-top: 4px;
+    padding-top: 4px;
 }
 
 .ip-info-key {
-  color: #838A85;
+    color: #838A85;
 }
 
 .ip-info-box {
-  padding-left: 20px;
-  min-width: 200px;
+    padding-left: 20px;
 }
 
 .ip-info-value {
-  color: #FFF;
+    color: #FFF;
+    min-width: 200px;
+}
+
+.ip-not-connected {
+    padding-top: 10px;
+    text-align: middle;
 }
