@@ -165,7 +165,7 @@ const IPMenu = new Lang.Class({
                 self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg');
                 self._flagContainer.destroy_all_children();
                 self._flagContainer.add_child(
-                    self._textureCache.loadGGG_file_async(Gio.file_new_for_path(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg'), -1, FLAG_SIZE, scaleFactor)
+                    self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg'), -1, FLAG_SIZE, scaleFactor)
                 );
             } else {
                 self._ipAddr     = DEFAULT_DATA.ip;
@@ -183,22 +183,35 @@ const IPMenu = new Lang.Class({
     },
 
     updateDetails: function(data) {
+        let self = this;
         if (this._ipAddr !== null) {
+            if (this['_notConnected']) {
+                delete this['_notConnected'];
+            }
+
+            this._ipInfoBox.destroy_all_children();
             SHOW_INFO.map(function(key) {
-                if (data[key] && this['_' + key]) {
-                    this['_' + key].text = String(data[key]);
+                if (self['_' + key]) {
+                    self['_' + key].text = String(data[key]);
                 } else {
                     let ipInfoRow = new St.BoxLayout();
-                    this._ipInfoBox.add_actor(ipInfoRow);
+                    self._ipInfoBox.add_actor(ipInfoRow);
                     ipInfoRow.add_actor(new St.Label({style_class: 'ip-info-key', text: LABEL_DATA[key] + ': '}));
-                    this['_' + key] = new St.Label({style_class: 'ip-info-value', text: data[key]});
-                    ipInfoRow.add_actor(this['_' + key]);
+                    self['_' + key] = new St.Label({style_class: 'ip-info-value', text: String(data[key])});
+                    ipInfoRow.add_actor(self['_' + key]);
                 }
             });
         } else {
             if (this['_notConnected']) {
                 this['_notConnected'].text = 'Not Connected';
             } else {
+                SHOW_INFO.map(function(key) {
+                    if (self['_' + key]) {
+                        //delete self['_' + key];
+                    }
+                });
+
+                this._ipInfoBox.destroy_all_children();
                 let ipNotConnected = new St.BoxLayout();
                 this._ipInfoBox.add_actor(ipNotConnected);
                 this['_notConnected'] = new St.Label({style_class: 'ip-not-connected', text: 'Not Connected'});
