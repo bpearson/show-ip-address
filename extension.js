@@ -156,9 +156,9 @@ const IPMenu = new Lang.Class({
         let self = this;
 
         _getIP(function(err, ipData) {
-            if (ipData !== null) {
+            if (ipData !== null && ipData.ip !== null) {
                 self._ipAddr     = ipData.ip;
-                self._label.text = self.getPanelText();
+                self._label.text = String(self.getPanelText());
                 self.updateDetails(ipData);
 
                 let scaleFactor  = St.ThemeContext.get_for_stage(global.stage).scale_factor;
@@ -169,7 +169,7 @@ const IPMenu = new Lang.Class({
                 );
             } else {
                 self._ipAddr     = DEFAULT_DATA.ip;
-                self._label.text = self.getPanelText();
+                self._label.text = String(self.getPanelText());
                 self.updateDetails(DEFAULT_DATA);
 
                 let scaleFactor  = St.ThemeContext.get_for_stage(global.stage).scale_factor;
@@ -207,7 +207,7 @@ const IPMenu = new Lang.Class({
             } else {
                 SHOW_INFO.map(function(key) {
                     if (self['_' + key]) {
-                        //delete self['_' + key];
+                        delete self['_' + key];
                     }
                 });
 
