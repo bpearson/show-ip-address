@@ -185,38 +185,20 @@ const IPMenu = new Lang.Class({
     updateDetails: function(data) {
         let self = this;
         if (this._ipAddr !== null) {
-            if (this['_notConnected']) {
-                delete this['_notConnected'];
-            }
-
             this._ipInfoBox.destroy_all_children();
             SHOW_INFO.map(function(key) {
-                if (self['_' + key]) {
-                    self['_' + key].text = String(data[key]);
-                } else {
+                if (data[key]) {
                     let ipInfoRow = new St.BoxLayout();
                     self._ipInfoBox.add_actor(ipInfoRow);
-                    ipInfoRow.add_actor(new St.Label({style_class: 'ip-info-key', text: LABEL_DATA[key] + ': '}));
-                    self['_' + key] = new St.Label({style_class: 'ip-info-value', text: String(data[key])});
-                    ipInfoRow.add_actor(self['_' + key]);
+                    ipInfoRow.add_actor(new St.Label({style_class: 'ip-info-key', text: String(LABEL_DATA[key] + ': ')}));
+                    ipInfoRow.add_actor(new St.Label({style_class: 'ip-info-value', text: String(data[key])}));
                 }
             });
         } else {
-            if (this['_notConnected']) {
-                this['_notConnected'].text = 'Not Connected';
-            } else {
-                SHOW_INFO.map(function(key) {
-                    if (self['_' + key]) {
-                        delete self['_' + key];
-                    }
-                });
-
-                this._ipInfoBox.destroy_all_children();
-                let ipNotConnected = new St.BoxLayout();
-                this._ipInfoBox.add_actor(ipNotConnected);
-                this['_notConnected'] = new St.Label({style_class: 'ip-not-connected', text: 'Not Connected'});
-                ipNotConnected.add_actor(this['_notConnected']);
-            }
+            this._ipInfoBox.destroy_all_children();
+            let ipNotConnected = new St.BoxLayout();
+            this._ipInfoBox.add_actor(ipNotConnected);
+            ipNotConnected.add_actor(new St.Label({style_class: 'ip-not-connected', text: 'Not Connected'}));
         }
     },
 
