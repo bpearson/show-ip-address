@@ -37,7 +37,7 @@ const IPMenuSettingsWidget = new GObject.Class({
 
     // Dark theme option.
     let darkContainer = new Gtk.HBox({spacing: 5});
-    let darkLabel = new Gtk.Label({label: _('Use dark theme')});
+    let darkLabel = new Gtk.Label({label: _('Use dark theme (restart required)')});
     let darkButton = new Gtk.CheckButton();
     darkContainer.pack_start(darkLabel, 0,0,0);
     darkContainer.pack_end(darkButton, 0,0,0);
