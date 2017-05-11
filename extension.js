@@ -19,6 +19,7 @@ const ICON_SIZE = 20;
 const FLAG_SIZE = 100;
 const UNKNOWN_SIZE = 40;
 
+const SETTINGS_DARK_MODE = 'dark-mode';
 const SETTINGS_COMPACT_MODE = 'compact-mode';
 const SETTINGS_REFRESH_RATE = 'refresh-rate';
 const SETTINGS_POSITION = 'position-in-panel';
@@ -61,8 +62,15 @@ const IPMenu = new Lang.Class({
         this._settings = Convenience.getSettings(Me.metadata['settings-schema']);
 
         this.setPrefs();
+        if (this._darkMode === true) {
+            mainClass = 'panel-status-menu-box-dark';
+            boxClass  = 'ip-info-box-dark';
+        } else {
+            mainClass = 'panel-status-menu-box';
+            boxClass  = 'ip-info-box';
+        }
 
-        let hbox = new St.BoxLayout({style_class: 'panel-status-menu-box'});
+        let hbox = new St.BoxLayout({style_class: mainClass});
 
         this._icon = new St.Icon({
             gicon: Gio.icon_new_for_string(Me.path + '/icons/unknown.svg'),
@@ -93,7 +101,7 @@ const IPMenu = new Lang.Class({
         });
         this._flagContainer.add_actor(this._flagTile);
 
-        this._ipInfoBox = new St.BoxLayout({style_class: 'ip-info-box', vertical: true});
+        this._ipInfoBox = new St.BoxLayout({style_class: boxClass, vertical: true});
         parentContainer.add_actor(this._ipInfoBox);
         ipInfo.actor.add(parentContainer);
         this.menu.addMenuItem(ipInfo);
@@ -138,10 +146,12 @@ const IPMenu = new Lang.Class({
     },
 
     setPrefs: function() {
+        this._prevDarkMode = this._darkMode;
         this._prevCompactMode = this._compactMode;
         this._prevRefreshRate = this._refreshRate;
         this._prevMenuPosition = this._menuPosition;
 
+        this._darkMode = this._settings.get_boolean(SETTINGS_DARK_MODE);
         this._compactMode = this._settings.get_boolean(SETTINGS_COMPACT_MODE);
         this._refreshRate = this._settings.get_int(SETTINGS_REFRESH_RATE);
         this._menuPosition = this._settings.get_string(SETTINGS_POSITION);

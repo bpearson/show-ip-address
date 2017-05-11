@@ -2,20 +2,29 @@
     padding-top: 4px;
 }
 
-.ip-info-key {
-    color: #838A85;
+.ip-info-box .ip-info-key {
+    color: #CCC;
 }
 
-.ip-info-box {
+.ip-info-box-dark .ip-info-key {
+    color: #090909;
+}
+
+.ip-info-box .ip-info-box {
     padding-left: 20px;
 }
 
-.ip-info-value {
+.ip-info-box .ip-info-value {
     color: #FFF;
     min-width: 100px;
 }
 
-.ip-not-connected {
+.ip-info-box-dark .ip-info-value {
+    color: #838383;
+    min-width: 100px;
+}
+
+.ip-info-box .ip-not-connected {
     padding-top: 10px;
     text-align: middle;
 }
