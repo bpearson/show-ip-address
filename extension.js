@@ -172,10 +172,10 @@ const IPMenu = new Lang.Class({
                 self.updateDetails(ipData);
 
                 let scaleFactor  = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-                self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/flags/' + ipData['country'].toLowerCase() + '.svg');
+                self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg');
                 self._flagContainer.destroy_all_children();
                 self._flagContainer.add_child(
-                    self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/flags/' + ipData['country'].toLowerCase() + '.svg'), -1, FLAG_SIZE, scaleFactor)
+                    self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg'), -1, FLAG_SIZE, scaleFactor)
                 );
             } else {
                 self._ipAddr     = DEFAULT_DATA.ip;
@@ -239,7 +239,7 @@ function _getIP(callback) {
 
         var ipAddr = JSON.parse(request.response_body.data);
         if (ipAddr.ip) {
-            request = Soup.Message.new('GET', 'https://ipapi.co/' + ipAddr.ip + '/json/');
+            request = Soup.Message.new('GET', 'http://api.hostip.info/get_json.php?ip=' + ipAddr.ip);
 
             _httpSession.queue_message(request, function(_httpSession, message) {
                 if (message.status_code !== 200) {
