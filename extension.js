@@ -27,28 +27,37 @@ const SETTINGS_POSITION = 'position-in-panel';
 const DEFAULT_DATA = {
     ip:           null,
     country_code: '',
+    country:      '',
     country_name: '',
     region_code:  '',
     city:         '',
+    isp:          '',
     zip_code:     '',
     time_zone:    '',
+    lat:          '',
     latitude:     '',
+    lon:          '',
     longitude:    '',
 };
 
 const LABEL_DATA = {
-    ip:           'IP',
-    country_code: 'Country Code',
-    country_name: 'Country',
-    region_code:  'Region',
-    city:         'City',
-    zip_code:     'Postcode',
-    time_zone:    'Timezone',
-    latitude:     'Latitude',
-    longitude:    'Longitude',
+    ip:           ' IP',
+    country_code: ' Country Code',
+    country:      ' Country',
+    country_name: ' Country',
+    region:       ' Region',
+    region_code:  ' Region',
+    city:         ' City',
+    isp:          ' ISP',
+    zip_code:     ' Postcode',
+    time_zone:    ' Timezone',
+    latitude:     ' Latitude',
+    lat:          ' Latitude',
+    lon:          ' Longitude',
+    longitude:    ' Longitude',
 };
 
-const SHOW_INFO = ['ip', 'country_name', 'city', 'time_zone', 'latitude', 'longitude'];
+const SHOW_INFO = ['ip', 'country', 'region', 'city', 'isp', 'lat', 'lon'];
 
 const IPMenu = new Lang.Class({
     Name: 'IPMenu.IPMenu',
@@ -166,16 +175,16 @@ const IPMenu = new Lang.Class({
         let self = this;
 
         _getIP(function(err, ipData) {
-            if (ipData !== null && ipData.ip !== null) {
-                self._ipAddr     = ipData.ip;
+            if (ipData !== null && ipData.query !== null) {
+                self._ipAddr     = ipData.query;
                 self._label.text = String(self.getPanelText());
                 self.updateDetails(ipData);
 
                 let scaleFactor  = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-                self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg');
+                self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/flags/' + ipData['countryCode'].toLowerCase() + '.svg');
                 self._flagContainer.destroy_all_children();
                 self._flagContainer.add_child(
-                    self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg'), -1, FLAG_SIZE, scaleFactor)
+                    self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/flags/' + ipData['countryCode'].toLowerCase() + '.svg'), -1, FLAG_SIZE, scaleFactor)
                 );
             } else {
                 self._ipAddr     = DEFAULT_DATA.ip;
@@ -239,7 +248,7 @@ function _getIP(callback) {
 
         var ipAddr = JSON.parse(request.response_body.data);
         if (ipAddr.ip) {
-            request = Soup.Message.new('GET', 'http://api.hostip.info/get_json.php?ip=' + ipAddr.ip);
+            request = Soup.Message.new('GET', 'https://extreme-ip-lookup.com/json/' + ipAddr.ip);
 
             _httpSession.queue_message(request, function(_httpSession, message) {
                 if (message.status_code !== 200) {
@@ -248,6 +257,9 @@ function _getIP(callback) {
                 }
 
                 var ipDetails = JSON.parse(request.response_body.data);
+                if (ipDetails.query) {
+                    ipDetails.ip = ipDetails.query;
+                }
 
                 callback(null, ipDetails);
             });
