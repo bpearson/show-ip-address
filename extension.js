@@ -23,6 +23,9 @@ const SETTINGS_DARK_MODE = 'dark-mode';
 const SETTINGS_COMPACT_MODE = 'compact-mode';
 const SETTINGS_REFRESH_RATE = 'refresh-rate';
 const SETTINGS_POSITION = 'position-in-panel';
+const SETTINGS_TOKEN = 'token';
+
+const URL = 'https://api.ipdata.co';
 
 const DEFAULT_DATA = {
     ip:           null,
@@ -55,9 +58,10 @@ const LABEL_DATA = {
     lat:          ' Latitude',
     lon:          ' Longitude',
     longitude:    ' Longitude',
+    org:          ' Organisation',
 };
 
-const SHOW_INFO = ['ip', 'country', 'region', 'city', 'isp', 'lat', 'lon'];
+const SHOW_INFO = ['ip', 'country_name', 'region', 'city', 'latitude', 'longitude'];
 
 const IPMenu = new Lang.Class({
     Name: 'IPMenu.IPMenu',
@@ -164,6 +168,8 @@ const IPMenu = new Lang.Class({
         this._compactMode = this._settings.get_boolean(SETTINGS_COMPACT_MODE);
         this._refreshRate = this._settings.get_int(SETTINGS_REFRESH_RATE);
         this._menuPosition = this._settings.get_string(SETTINGS_POSITION);
+
+        this._token = this._settings.get_string(SETTINGS_TOKEN);
     },
 
     getPanelText: function() {
@@ -174,17 +180,18 @@ const IPMenu = new Lang.Class({
 
         let self = this;
 
-        _getIP(function(err, ipData) {
-            if (ipData !== null && ipData.query !== null) {
-                self._ipAddr     = ipData.query;
+        _getIP(self._token, function(err, ipData) {
+            //log(JSON.stringify(ipData));
+            if (ipData !== null && ipData.ip !== null) {
+                self._ipAddr     = ipData.ip;
                 self._label.text = String(self.getPanelText());
                 self.updateDetails(ipData);
 
                 let scaleFactor  = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-                self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/flags/' + ipData['countryCode'].toLowerCase() + '.svg');
+                self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg');
                 self._flagContainer.destroy_all_children();
                 self._flagContainer.add_child(
-                    self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/flags/' + ipData['countryCode'].toLowerCase() + '.svg'), -1, FLAG_SIZE, scaleFactor)
+                    self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg'), -1, FLAG_SIZE, scaleFactor, scaleFactor.toFixed(1))
                 );
             } else {
                 self._ipAddr     = DEFAULT_DATA.ip;
@@ -195,7 +202,7 @@ const IPMenu = new Lang.Class({
                 self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/unknown.svg');
                 self._flagContainer.destroy_all_children();
                 self._flagContainer.add_child(
-                    self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/unknown.svg'), -1, UNKNOWN_SIZE, scaleFactor)
+                    self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/unknown.svg'), -1, UNKNOWN_SIZE, scaleFactor, scaleFactor.toFixed(1))
                 );
             }
         });
@@ -233,12 +240,13 @@ let indicator;
  *
  * @return void
  */
-function _getIP(callback) {
+function _getIP(token, callback) {
 
     let _httpSession = new Soup.SessionAsync();
     Soup.Session.prototype.add_feature.call(_httpSession,new Soup.ProxyResolverDefault());
 
-    var request = Soup.Message.new('GET', 'https://api.ipify.org/?format=json');
+    var url     = URL + '?api-key=' + token;
+    var request = Soup.Message.new('GET', url);
 
     _httpSession.queue_message(request, function(_httpSession, message) {
         if (message.status_code !== 200) {
@@ -246,24 +254,12 @@ function _getIP(callback) {
             return;
         }
 
-        var ipAddr = JSON.parse(request.response_body.data);
-        if (ipAddr.ip) {
-            request = Soup.Message.new('GET', 'https://extreme-ip-lookup.com/json/' + ipAddr.ip);
-
-            _httpSession.queue_message(request, function(_httpSession, message) {
-                if (message.status_code !== 200) {
-                    callback(message.status_code, null);
-                    return;
-                }
-
-                var ipDetails = JSON.parse(request.response_body.data);
-                if (ipDetails.query) {
-                    ipDetails.ip = ipDetails.query;
-                }
-
-                callback(null, ipDetails);
-            });
+        var ipDetails = JSON.parse(request.response_body.data);
+        if (ipDetails.query) {
+            ipDetails.ip = ipDetails.query;
         }
+
+        callback(null, ipDetails);
     });
 
 }

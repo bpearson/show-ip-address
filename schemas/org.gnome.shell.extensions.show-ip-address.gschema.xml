@@ -6,8 +6,12 @@
     <value value="2" nick="right"/>
   </enum>
   <schema path="/org/gnome/shell/extensions/show-ip-address/" id="org.gnome.shell.extensions.show-ip-address">
+    <key type="s" name="token">
+      <default>""</default>
+      <summary>API Token for api.ipdata.co</summary>
+    </key>
     <key type="i" name="refresh-rate">
-      <default>30</default>
+      <default>60</default>
       <summary>Check every x seconds</summary>
     </key>
     <key type="b" name="dark-mode">

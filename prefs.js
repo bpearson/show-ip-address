@@ -17,6 +17,7 @@ const SETTINGS_COMPACT_MODE = 'compact-mode';
 const SETTINGS_DARK_MODE = 'dark-mode';
 const SETTINGS_REFRESH_RATE = 'refresh-rate';
 const SETTINGS_POSITION = 'position-in-panel';
+const SETTINGS_TOKEN = 'token';
 
 const IPMenuSettingsWidget = new GObject.Class({
   Name: 'IPMenu.Prefs.IPMenuSettingsWidget',
@@ -81,6 +82,16 @@ const IPMenuSettingsWidget = new GObject.Class({
     frequencySelector.set_increments(10,100);
     this._settings.bind(SETTINGS_REFRESH_RATE, frequencySelector, 'value', Gio.SettingsBindFlags.DEFAULT);
     vbox.add(frequencyContainer);
+
+    // Token.
+    let tokenContainer = new Gtk.HBox({spacing: 5});
+    let tokenLabel = new Gtk.Label({label: _('API Token for api.ipdata.co')});
+    let tokenEntry = new Gtk.Entry();
+    tokenContainer.pack_start(tokenLabel, 0,0,0);
+    tokenContainer.pack_end(tokenEntry, 0,0,0);
+    tokenEntry.set_text(this._settings.get_string(SETTINGS_TOKEN));
+    this._settings.bind(SETTINGS_TOKEN, tokenEntry, 'text', Gio.SettingsBindFlags.DEFAULT);
+    vbox.add(tokenContainer);
 
   },
 });
