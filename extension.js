@@ -129,6 +129,19 @@ const IPMenu = new Lang.Class({
 
         Main.panel.addToStatusArea('ip-menu', this, 1, this._menuPosition);
 
+        this._buttonMenu = new PopupMenu.PopupBaseMenuItem({
+            reactive: false,
+            style_class: 'ip-menu-button-container'
+        });
+        this.menu.addMenuItem(this._buttonMenu);
+        this._ipControls = new St.BoxLayout({style_class: 'controls', vertical: true});
+        this._buttonMenu.add_actor(this._ipControls);
+        this._reloadButton = this.createButton('view-refresh-symbolic', _("Refresh"));
+        this._reloadButton.connect('clicked', Lang.bind(this, function() {
+            this.update();
+        }));
+        this._ipControls.add_actor(this._reloadButton);
+
         this.update();
         this.start(this._refreshRate);
     },
@@ -174,6 +187,25 @@ const IPMenu = new Lang.Class({
 
     getPanelText: function() {
         return this._compactMode ? '' : (this._ipAddr == null ? 'Not Connected' : this._ipAddr);
+    },
+
+    createButton: function(iconName, accessibleName) {
+        let button;
+
+        button = new St.Button({
+            reactive: true,
+            can_focus: true,
+            track_hover: true,
+            accessible_name: accessibleName,
+            style_class: 'message-list-clear-button button ip-button-action'
+        });
+
+        button.child = new St.Icon({
+            icon_name: iconName,
+            icon_size: ICON_SIZE
+        });
+
+        return button;
     },
 
     update: function() {
