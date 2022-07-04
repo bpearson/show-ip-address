@@ -11,7 +11,8 @@
     "3.24",
     "3.34",
     "3.40",
-    "40"
+    "40",
+    "42"
   ],
   "url": "https://github.com/bpearson/gnome-show-ip-address",
   "uuid": "show-ip-address@bpearson.github.com",
