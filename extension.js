@@ -1,20 +1,19 @@
 /**
  * Show IP Address main.
  */
-const Gio = imports.gi.Gio;
-const GObject = imports.gi.GObject;
+import GLib from 'gi://GLib';
+import Soup from 'gi://Soup';
+import Gio from 'gi://Gio';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
+
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+
+import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+
 const Lang = imports.lang;
-const St = imports.gi.St;
-const Main = imports.ui.main;
-
-const PanelMenu = imports.ui.panelMenu;
-const PopupMenu = imports.ui.popupMenu;
-const Mainloop = imports.mainloop;
-
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const Convenience = Me.imports.convenience;
-const Soup = imports.gi.Soup;
 
 const ICON_SIZE = 20;
 const FLAG_SIZE = 100;
@@ -65,13 +64,16 @@ const LABEL_DATA = {
 const SHOW_INFO = ['ip', 'country_name', 'region', 'city', 'latitude', 'longitude'];
 
 const IPMenu = GObject.registerClass(
+    { GTypeName: "IPMenu" },
     class IPMenu extends PanelMenu.Button {
-        _init() {
+        _init(ext, settings) {
             super._init(0.0, 'IP Details');
 
             this._textureCache = St.TextureCache.get_default();
 
-            this._settings = Convenience.getSettings(Me.metadata['settings-schema']);
+            this._settings = settings;
+
+            this.ext = ext;
 
             this.setPrefs();
             var mainClass = '';
@@ -87,7 +89,7 @@ const IPMenu = GObject.registerClass(
             let hbox = new St.BoxLayout({style_class: mainClass});
 
             this._icon = new St.Icon({
-                gicon: Gio.icon_new_for_string(Me.path + '/icons/unknown.svg'),
+                gicon: Gio.icon_new_for_string(`${this.ext.path}/icons/unknown.svg`),
                 icon_size: ICON_SIZE
             });
 
@@ -110,7 +112,7 @@ const IPMenu = GObject.registerClass(
             parentContainer.add_actor(this._flagContainer);
             let scaleFactor  = St.ThemeContext.get_for_stage(global.stage).scale_factor;
             this._flagTile = new St.Icon({
-              gicon: Gio.icon_new_for_string(Me.path + '/icons/unknown.svg'),
+              gicon: Gio.icon_new_for_string(`${this.ext.path}/icons/unknown.svg`),
               icon_size: UNKNOWN_SIZE
             });
             this._flagContainer.add_actor(this._flagTile);
@@ -135,7 +137,11 @@ const IPMenu = GObject.registerClass(
                 style_class: 'ip-menu-button-container'
             });
             this.menu.addMenuItem(this._buttonMenu);
-            this._ipControls = new St.BoxLayout({style_class: 'controls', vertical: true});
+            this._ipControls = new St.BoxLayout({
+                style_class: 'controls',
+                vertical: true,
+                x_expand: true
+            });
             this._buttonMenu.add_actor(this._ipControls);
             this._reloadButton = this.createButton('view-refresh-symbolic', _("Refresh"));
             this._reloadButton.connect('clicked', Lang.bind(this, function() {
@@ -153,15 +159,17 @@ const IPMenu = GObject.registerClass(
         }
 
         start(timeout) {
-            this.timer = Mainloop.timeout_add_seconds(timeout, Lang.bind(this, function() {
-                this.update();
-                return true;
-            }));
+            const priority = 0 // Default.
+
+            this.stop();
+            this.timer = Glib.timeout_add_seconds(priority, timeout, () => this.start(timeout));
+            this.update();
         }
 
         stop() {
             if (this.timer) {
-                Mainloop.source_remove(this.timer);
+                Glib.source_remove(this.timer);
+                this.timer = undefined;
             }
         }
 
@@ -198,6 +206,7 @@ const IPMenu = GObject.registerClass(
                 can_focus: true,
                 track_hover: true,
                 accessible_name: accessibleName,
+                x_expand: true,
                 style_class: 'message-list-clear-button button ip-button-action'
             });
 
@@ -221,10 +230,10 @@ const IPMenu = GObject.registerClass(
                     self.updateDetails(ipData);
 
                     let scaleFactor  = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-                    self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg');
+                    self._icon.gicon = Gio.icon_new_for_string(`${self.ext.path}/icons/flags/${ipData['country_code'].toLowerCase()}.svg`);
                     self._flagContainer.destroy_all_children();
                     self._flagContainer.add_child(
-                        self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/flags/' + ipData['country_code'].toLowerCase() + '.svg'), -1, FLAG_SIZE, scaleFactor, scaleFactor.toFixed(1))
+                        self._textureCache.load_file_async(Gio.file_new_for_path(`${self.ext.path}/icons/flags/${ipData['country_code'].toLowerCase()}.svg`), -1, FLAG_SIZE, scaleFactor, scaleFactor.toFixed(1))
                     );
                 } else {
                     self._ipAddr     = DEFAULT_DATA.ip;
@@ -232,10 +241,10 @@ const IPMenu = GObject.registerClass(
                     self.updateDetails(DEFAULT_DATA);
 
                     let scaleFactor  = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-                    self._icon.gicon = Gio.icon_new_for_string(Me.path + '/icons/unknown.svg');
+                    self._icon.gicon = Gio.icon_new_for_string(`${self.ext.path}/icons/unknown.svg`);
                     self._flagContainer.destroy_all_children();
                     self._flagContainer.add_child(
-                        self._textureCache.load_file_async(Gio.file_new_for_path(Me.path + '/icons/unknown.svg'), -1, UNKNOWN_SIZE, scaleFactor, scaleFactor.toFixed(1))
+                        self._textureCache.load_file_async(Gio.file_new_for_path(`${self.ext.path}/icons/unknown.svg`), -1, UNKNOWN_SIZE, scaleFactor, scaleFactor.toFixed(1))
                     );
                 }
             });
@@ -275,19 +284,27 @@ let indicator;
  */
 function _getIP(token, callback) {
 
-    let _httpSession = new Soup.SessionAsync();
-    Soup.Session.prototype.add_feature.call(_httpSession,new Soup.ProxyResolverDefault());
+    let session = new Soup.Session();
+    let params  = {
+        "api-key": token,
+    };
 
-    var url     = URL + '?api-key=' + token;
-    var request = Soup.Message.new('GET', url);
+    let message = Soup.Message.new_from_encoded_form(
+        'GET',
+        URL,
+        Soup.form_encode_hash(params)
+    );
 
-    _httpSession.queue_message(request, function(_httpSession, message) {
-        if (message.status_code !== 200) {
-            callback(message.status_code, null);
+    session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, null, function(session, result) {
+        if (message.get_status() !== Soup.Status.OK) {
+            callback(message.get_status(), null);
             return;
         }
 
-        var ipDetails = JSON.parse(request.response_body.data);
+        let bytes = session.send_and_read_finish(result);
+        let decoder = new TextDecoder('utf-8');
+        let response = decoder.decode(bytes.get_data());
+        let ipDetails = JSON.parse(response);
         if (ipDetails.query) {
             ipDetails.ip = ipDetails.query;
         }
@@ -297,32 +314,14 @@ function _getIP(token, callback) {
 
 }
 
-
-/**
- * Initialise.
- *
- * @return void
- */
-function init() {
-
-}
-
-
-/**
- * Enable this extension.
- *
- * @return void
- */
-function enable() {
-    indicator = new IPMenu();
-}
+export default class extends Extension
+{
+	enable() {
+	    indicator = new IPMenu(this, this.getSettings());
+	}
+	disable() {
+	    indicator.destroy();
+	}
 
 
-/**
- * Disable this extension.
- *
- * @return void
- */
-function disable() {
-    indicator.destroy();
 }

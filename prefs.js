@@ -1,107 +1,127 @@
 /*
  *
  */
-const Gio = imports.gi.Gio;
-const Gtk = imports.gi.Gtk;
-const GObject = imports.gi.GObject;
-const Lang = imports.lang;
+import Gio from 'gi://Gio';
+import GObject from 'gi://GObject';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const Convenience = Me.imports.convenience;
 
-const Gettext = imports.gettext.domain('gnome-shell-extensions');
-const _ = Gettext.gettext;
+import Adw from 'gi://Adw';
+import Gtk from 'gi://Gtk';
 
-const SETTINGS_COMPACT_MODE = 'compact-mode';
-const SETTINGS_DARK_MODE = 'dark-mode';
-const SETTINGS_REFRESH_RATE = 'refresh-rate';
-const SETTINGS_POSITION = 'position-in-panel';
-const SETTINGS_TOKEN = 'token';
+import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-const IPMenuSettingsWidget = new GObject.Class({
-  Name: 'IPMenu.Prefs.IPMenuSettingsWidget',
-  GTypeName: 'IPMenuSettingsWidget',
-  Extends: Gtk.Grid,
+import { SettingsData } from './settings_data.js';
 
-  _init: function() {
-    this.parent();
-    this.margin = 100; //this is a fudge to get the settings to center as I couldn't work out how to resize the parent dialog
-    this.row_spacing = 6;
+export default class Prefs extends ExtensionPreferences {
 
-    this.orientation = Gtk.Orientation.VERTICAL;
+    fillPreferencesWindow(window) {
+        const settingsData = new SettingsData(this.getSettings());
 
-    this._settings = Convenience.getSettings(Me.metadata['settings-schema']);
+        const width = 750;
+        const height = 580;
+        window.set_default_size(width, height);
 
-    let vbox = new Gtk.VBox();
-    this.add(vbox);
+        const page = Adw.PreferencesPage.new();
 
-    // Dark theme option.
-    let darkContainer = new Gtk.HBox({spacing: 5});
-    let darkLabel = new Gtk.Label({label: _('Use dark theme (restart required)')});
-    let darkButton = new Gtk.CheckButton();
-    darkContainer.pack_start(darkLabel, 0,0,0);
-    darkContainer.pack_end(darkButton, 0,0,0);
-    this._settings.bind(SETTINGS_DARK_MODE, darkButton, 'active', Gio.SettingsBindFlags.DEFAULT);
-    vbox.add(darkContainer);
+        const group1 = Adw.PreferencesGroup.new();
+        this.useDarkTheme  = this.addSwitch(group1, "Use Dark Theme (requires restart)", settingsData.darkMode);
+        this.compactMode   = this.addSwitch(group1, "Hide IP Address in toolbar", settingsData.compactMode);
+        this.refreshRate   = this.addSlider(group1, "Refresh Interval", settingsData.refreshRate, 1.0, 600.0, 0);
+        //this.panelPosition = this.addCombo(group1, "Position in panel", settingsData.panelPosition);
+        this.token         = this.addInput(group1, "API Token", settingsData.token);
+        page.add(group1);
 
-    // Show Flag option.
-    let showContainer = new Gtk.HBox({spacing: 5});
-    let showLabel = new Gtk.Label({label: _('Only show flag in Toolbar')});
-    let showButton = new Gtk.CheckButton();
-    showContainer.pack_start(showLabel, 0,0,0);
-    showContainer.pack_end(showButton, 0,0,0);
-    this._settings.bind(SETTINGS_COMPACT_MODE, showButton, 'active', Gio.SettingsBindFlags.DEFAULT);
-    vbox.add(showContainer);
+        window.add(page);
+    }
 
-    // Toolbar position.
-    let positionContainer = new Gtk.HBox({spacing: 5});
-    let positionLabel = new Gtk.Label({label: _('Toolbar position')});
-    let positionSelector = new Gtk.ComboBoxText();
-    positionContainer.pack_start(positionLabel, 0,0,0);
-    positionContainer.pack_end(positionSelector, 0,0,0);
-    ['left','center','right'].forEach(function(item) {
-      positionSelector.append_text(item);
-    });
-    positionSelector.set_active(this._settings.get_enum(SETTINGS_POSITION));
-    let self = this;
-    positionSelector.connect('changed', function(pos) {
-      self._settings.set_enum(SETTINGS_POSITION, positionSelector.get_active());
-    });
-    vbox.add(positionContainer);
+    addSlider(group, labelText, settingsData, lower, upper, decimalDigits) {
+        const scale = new Gtk.Scale({
+            digits: decimalDigits,
+            adjustment: new Gtk.Adjustment({lower: lower, upper: upper}),
+            value_pos: Gtk.PositionType.RIGHT,
+            hexpand: true,
+            halign: Gtk.Align.END
+        });
+        scale.set_draw_value(true);
+        scale.set_value(settingsData.get());
+        scale.connect('value-changed', (sw) => {
+            var newval = sw.get_value();
+            if (newval != settingsData.get()) {
+                settingsData.set(newval);
+            }
+        });
+        scale.set_size_request(400, 15);
 
-    // Frequency option.
-    let frequencyContainer = new Gtk.HBox({spacing: 5});
-    let frequencyLabel = new Gtk.Label({label: _('How often to check for IP change (secs)')});
-    let frequencySelector = new Gtk.SpinButton();
-    frequencyContainer.pack_start(frequencyLabel, 0,0,0);
-    frequencyContainer.pack_end(frequencySelector, 0,0,0);
-    frequencySelector.set_numeric(true);
-    frequencySelector.set_value(this._settings.get_value(SETTINGS_REFRESH_RATE));
-    frequencySelector.set_range(30, 30000);
-    frequencySelector.set_increments(10,100);
-    this._settings.bind(SETTINGS_REFRESH_RATE, frequencySelector, 'value', Gio.SettingsBindFlags.DEFAULT);
-    vbox.add(frequencyContainer);
+        const row = Adw.ActionRow.new();
+        row.set_title(labelText);
+        row.add_suffix(scale);
+        group.add(row);
 
-    // Token.
-    let tokenContainer = new Gtk.HBox({spacing: 5});
-    let tokenLabel = new Gtk.Label({label: _('API Token for api.ipdata.co')});
-    let tokenEntry = new Gtk.Entry();
-    tokenContainer.pack_start(tokenLabel, 0,0,0);
-    tokenContainer.pack_end(tokenEntry, 0,0,0);
-    tokenEntry.set_text(this._settings.get_string(SETTINGS_TOKEN));
-    this._settings.bind(SETTINGS_TOKEN, tokenEntry, 'text', Gio.SettingsBindFlags.DEFAULT);
-    vbox.add(tokenContainer);
+        return scale;
+    }
 
-  },
-});
+    addSwitch(group, labelText, settingsData) {
+        const gtkSwitch = new Gtk.Switch({hexpand: true, halign: Gtk.Align.END});
+        gtkSwitch.set_active(settingsData.get());
+        gtkSwitch.set_valign(Gtk.Align.CENTER);
+        gtkSwitch.connect('state-set', (sw) => {
+            var newval = sw.get_active();
+            if (newval != settingsData.get()) {
+                settingsData.set(newval);
+            }
+        });
 
-function init() {
-}
+        const row = Adw.ActionRow.new();
+        row.set_title(labelText);
+        row.add_suffix(gtkSwitch);
+        group.add(row);
 
-function buildPrefsWidget() {
-  let widget = new IPMenuSettingsWidget();
-  widget.show_all();
+        return gtkSwitch;
+    }
 
-  return widget;
+    addCombo(group, labelText, settingsData) {
+        const model = new Gtk.ListStore();
+        model.set_column_types([GObject.TYPE_STRING, GObject.TYPE_STRING]);
+        model.append(["left", "Left"]);
+        model.append(["center", "Center"]);
+        model.append(["right", "Right"]);
+        const gtkCombo = new Gtk.ComboBox({model: model});
+        gtkCombo.set_active(settingsData.get());
+        gtkCombo.set_valign(Gtk.Align.CENTER);
+        gtkCombo.connect('changed', (sw) => {
+            let [success, iter] = sw.get_active_iter();
+            if (!success) return;
+            settingsData.set(model.get_value(iter, 0));
+        });
+
+        const row = Adw.ActionRow.new();
+        row.set_title(labelText);
+        row.add_suffix(gtkCombo);
+        group.add(row);
+
+        return gtkCombo;
+    }
+
+    addInput(group, labelText, settingsData) {
+        const gtkInput = new Gtk.Entry({buffer: new Gtk.EntryBuffer()});
+        gtkInput.set_text(settingsData.get());
+        gtkInput.set_valign(Gtk.Align.CENTER);
+
+        const row = Adw.ActionRow.new();
+        row.set_title(labelText);
+        row.add_suffix(gtkInput);
+        group.add(row);
+
+        return gtkInput;
+    }
+
+    findWidgetByType(parent, type) {
+        for (const child of [...parent]) {
+            if (child instanceof type) return child;
+
+            const match = this.findWidgetByType(child, type);
+            if (match) return match;
+        }
+        return null;
+    }
 }
